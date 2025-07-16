@@ -6,13 +6,14 @@ const workdayStrat = require('./strats/workday-strat.js')
 const disneyStrat = require('./strats/disney-strat.js')
 const salesforceStrat = require('./strats/salesforce-strat.js')
 const pinterestStrat = require('./strats/pinterest-strat.js')
+const adobeStrat = require('./strats/adobe-strat.js')
 
 async function run() {
   const _pageurls = [
     [
-      "Pinterest", 
-      "https://www.pinterestcareers.com/jobs/?location=Remote%20-%20US&location=Remote&team=Engineering&pagesize=20#results",
-      pinterestStrat 
+      "Clear", 
+      "https://job-boards.greenhouse.io/clear?departments%5B%5D=42447",
+      greenhouseStrat 
     ],
   ]
 
@@ -36,6 +37,9 @@ async function run() {
     await page.goto(url, { waitUntil: 'load' });
 
     const now = (new Date()).toLocaleString("en-US", { timeZone: "America/New_York" })
+
+    scrapeStrat.runOnce && await scrapeStrat.runOnce(page) 
+
     const posts = await scrapeStrat.scrapePosts(page, co)
     posts.forEach(p => {
       p.dateFirstScraped = now
@@ -118,11 +122,11 @@ async function run() {
   let i = 0, k = 0
   const cos = pageurls.map(([co]) => co)
   while (i < ny_arr.length && k < last_arr.length) {
-    if (!cos.includes(last_arr[k].co)) {
-      merged.push(last_arr[k])
-      ++k 
-      continue
-    }
+   // if (!cos.includes(last_arr[k].co)) {
+   //   merged.push(last_arr[k])
+   //   ++k 
+   //   continue
+   // }
 
     if (ny_arr[i].co < last_arr[k].co) {
       merged.push(ny_arr[i])
@@ -214,6 +218,11 @@ async function run() {
 const SCRAPE_TARGETS =  
   [
     [
+      "Adobe", 
+      "https://careers.adobe.com/us/en/c/engineering-and-product-jobs?s=1",
+      adobeStrat 
+    ],
+    [
       "Snap", 
       "https://wd1.myworkdaysite.com/en-US/recruiting/snapchat/snap/jobs?jobFamily=8d73f0a7971d102b9d459841e16ae3a5&locations=256f279d5e741082c567c24fca236272&locations=efe1a865073101b9db6c8da7020a6037",
       workdayStrat
@@ -252,7 +261,7 @@ const SCRAPE_TARGETS =
       "StubHub", 
       "https://job-boards.eu.greenhouse.io/stubhubinc?departments%5B%5D=4034328101&offices%5B%5D=4016791101",
       greenhouseStrat
-    ] 
+    ]
   ];
 
 run();
