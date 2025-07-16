@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('node:fs')
-const discordJS = require('./discord.js').default
+const discordJS = require('./discord.js')
 const greenhouseStrat = require('./strats/greenhouse-strat.js')
 const workdayStrat = require('./strats/workday-strat.js')
 const disneyStrat = require('./strats/disney-strat.js')

@@ -1,6 +1,6 @@
-import { EmbedBuilder, WebhookClient } from 'discord.js' 
+const { EmbedBuilder, WebhookClient } = require('discord.js');
 
-const webhookClient = new WebhookClient({ url: 'https://discord.com/api/webhooks/1394480007849443408/_9QGnvReWrGwPyWif1Y2IePIWpCtMPWgb17iao0ZbesNfvQnd8SF7vQru07HU6uQWyay' })
+const webhookClient = new WebhookClient({ url: 'https://discord.com/api/webhooks/1394480007849443408/_9QGnvReWrGwPyWif1Y2IePIWpCtMPWgb17iao0ZbesNfvQnd8SF7vQru07HU6uQWyay' });
 
 function _sendMessage(msg, embed) {
   webhookClient.send({
@@ -10,7 +10,7 @@ function _sendMessage(msg, embed) {
   })
 }
 
-export default {
+module.exports = {
   sendMessage(msg, title, desc) {
     if (!msg) return 
 
