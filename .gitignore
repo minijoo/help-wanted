@@ -3,5 +3,6 @@
 /files
 /logs
 /screenshots
+*.swp
 
 

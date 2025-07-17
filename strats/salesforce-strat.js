@@ -1,15 +1,30 @@
 const salesforce = {
+  runOnce,
   scrapePosts: salesforceScrape,
   buttonSel: 'a[aria-label="Next page"]',
   buttonEval: (b) => !!b
 }
 
+async function runOnce(page) {
+  await page.evaluate(() => 
+    document.querySelector('input#l-region-ts-control').click()
+  )
+  await page.evaluate(() => 
+    document.querySelector('div#l-region-opt-55').click()
+  )
+  await page.evaluate(() => 
+    document.querySelector('button#js-main-job-search').click()
+  )
+  await page.waitForNavigation({ waitUntil: 'load' })
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+}
+
 async function salesforceScrape(page, co) {
   await page.locator('div.job-listing > div.card-job').wait()
-  const [response] = await Promise.all([
-    page.waitForNavigation({ waitUntil: 'load' }),
-    page.click('button#js-main-job-search')
-  ]);
+  //const [response] = await Promise.all([
+  //  page.waitForNavigation({ waitUntil: 'load' }),
+  //  page.click('button#js-main-job-search')
+  //]);
   const posts = await 
     page.evaluate((co) => {
       return Array.from(document.querySelectorAll('div.job-listing > div.card-job'))

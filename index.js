@@ -10,10 +10,10 @@ const adobeStrat = require('./strats/adobe-strat.js')
 
 async function run() {
   const _pageurls = [
-    [
-      "Clear", 
-      "https://job-boards.greenhouse.io/clear?departments%5B%5D=42447",
-      greenhouseStrat 
+    [ 
+      "Salesforce",
+      "https://careers.salesforce.com/en/jobs/?search=&team=Software+Engineering&pagesize=20#results",
+      salesforceStrat
     ],
   ]
 
@@ -76,6 +76,7 @@ async function run() {
       ++pagenum
     } 
   }
+  console.log(arr)
 
   const ny_arr = arr.filter(post => post.locs.includes('New York'))
   ny_arr.sort((a, b) => a.co.localeCompare(b.co) || b.id.localeCompare(a.id))
@@ -116,36 +117,53 @@ async function run() {
     companyJobs.get(job.co)[1]++
   }
   
-  //const delisted = []
   const merged = []
   const added = []
   let i = 0, k = 0
   const cos = pageurls.map(([co]) => co)
   while (i < ny_arr.length && k < last_arr.length) {
-   // if (!cos.includes(last_arr[k].co)) {
-   //   merged.push(last_arr[k])
-   //   ++k 
-   //   continue
-   // }
+    let incr_i = false, incr_k = false
 
     if (ny_arr[i].co < last_arr[k].co) {
       merged.push(ny_arr[i])
-      added.push(ny_arr[i++])
+      added.push(ny_arr[i])
+      incr_i = true
     } else if (ny_arr[i].co > last_arr[k].co) {
-      merged.push(last_arr[k++])
-      //delisted.push(last_arr[k++])
+      merged.push(last_arr[k])
+      incr_k = true
     } else {
       if (ny_arr[i].id > last_arr[k].id) {
         merged.push(ny_arr[i])
-        added.push(ny_arr[i++])
+        added.push(ny_arr[i])
+        incr_i = true
       } else if (ny_arr[i].id < last_arr[k].id) {
-        merged.push(last_arr[k++])
-        //delisted.push(last_arr[k++])
+        merged.push(last_arr[k])
+        incr_k = true
       } else {
         merged.push(last_arr[k]) // take from here over new data to keep old time seen value
-        ++i
-        ++k
+        incr_i = true
+        incr_k = true
       }
+    }
+
+    if (incr_i) {
+      let count = 0
+      while (
+        i + count < ny_arr.length && ny_arr[i + count].id === ny_arr[i].id
+      ) {
+        ++count
+      }
+      i += count
+    }
+    
+    if (incr_k) {
+      let count = 0
+      while (
+        k + count < last_arr.length && last_arr[k + count].id === last_arr[k].id
+      ) {
+        ++count
+      }
+      k += count
     }
   } 
 
@@ -231,11 +249,6 @@ const SCRAPE_TARGETS =
       "Disney",
       "https://www.disneycareers.com/en/search-jobs/software%20engineer/New%20York,%20NY/391/1/4/6252001-5128638-5128581/40x7128/-74x006/100/2",
       disneyStrat
-    ],
-    [ 
-      "Salesforce",
-      "https://careers.salesforce.com/en/jobs/?search=&region=New+York&team=Software+Engineering&pagesize=20#results",
-      salesforceStrat
     ],
     [
       "Rakuten",
