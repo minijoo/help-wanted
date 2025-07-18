@@ -6,6 +6,7 @@ const strat = {
 
 async function scrape(page, co) {
   await page.locator('ul.job-list').wait()
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   const posts = await page.evaluate((co) => {
     return Array.from(document.querySelectorAll('ul.job-list > li'))
       .map(li => {
