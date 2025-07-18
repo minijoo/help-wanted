@@ -7,13 +7,14 @@ const disneyStrat = require('./strats/disney-strat.js')
 const salesforceStrat = require('./strats/salesforce-strat.js')
 const pinterestStrat = require('./strats/pinterest-strat.js')
 const adobeStrat = require('./strats/adobe-strat.js')
+const airbnbStrat = require('./strats/airbnb-strat.js')
 
 async function run() {
   const _pageurls = [
     [ 
-      "Salesforce",
-      "https://careers.salesforce.com/en/jobs/?search=&team=Software+Engineering&pagesize=20#results",
-      salesforceStrat
+      "AirBnb",
+      "https://careers.airbnb.com/positions/?_departments=engineering&_offices=united-states",
+      airbnbStrat
     ],
   ]
 
@@ -76,7 +77,6 @@ async function run() {
       ++pagenum
     } 
   }
-  console.log(arr)
 
   const ny_arr = arr.filter(post => post.locs.includes('New York'))
   ny_arr.sort((a, b) => a.co.localeCompare(b.co) || b.id.localeCompare(a.id))
@@ -274,7 +274,12 @@ const SCRAPE_TARGETS =
       "StubHub", 
       "https://job-boards.eu.greenhouse.io/stubhubinc?departments%5B%5D=4034328101&offices%5B%5D=4016791101",
       greenhouseStrat
-    ]
+    ],
+    [ 
+      "AirBnb",
+      "https://careers.airbnb.com/positions/?_departments=engineering&_offices=united-states",
+      airbnbStrat
+    ],
   ];
 
 run();
