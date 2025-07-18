@@ -10,7 +10,7 @@ async function scrape(page, co) {
     return Array.from(document.querySelectorAll('ul.job-list > li'))
       .map(li => {
         const name = li
-          .querySelector('h3 > a').innerTest
+          .querySelector('h3 > a').innerText
         const href_split = li
           .querySelector('h3 > a').getAttribute('href').split('/')
         const id = href_split[href_split.length - 2]
