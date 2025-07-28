@@ -8,13 +8,15 @@ const salesforceStrat = require('./strats/salesforce-strat.js')
 const pinterestStrat = require('./strats/pinterest-strat.js')
 const adobeStrat = require('./strats/adobe-strat.js')
 const airbnbStrat = require('./strats/airbnb-strat.js')
+const ashStrat = require('./strats/ash-strat.js')
+const mastercardStrat = require('./strats/mastercard-strat.js')
 
 async function run() {
   const _pageurls = [
     [ 
-      "AirBnb",
-      "https://careers.airbnb.com/positions/?_departments=engineering&_offices=united-states",
-      airbnbStrat
+      "Mastercard",
+      "https://careers.mastercard.com/us/en/search-results",
+      mastercardStrat
     ],
   ]
 
@@ -34,52 +36,21 @@ async function run() {
   //page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
   const arr = []
+  const errors = []
   for (const [co, url, scrapeStrat] of pageurls) {
-    await page.goto(url, { waitUntil: 'load' });
-
-    const now = (new Date()).toLocaleString("en-US", { timeZone: "America/New_York" })
-
-    scrapeStrat.runOnce && await scrapeStrat.runOnce(page) 
-
-    const posts = await scrapeStrat.scrapePosts(page, co)
-    posts.forEach(p => {
-      p.dateFirstScraped = now
-    })
-    arr.push(...posts)
-
-    let buttonExists = await page.$(scrapeStrat.buttonSel)
-    //buttonExists && await buttonExists.scrollIntoView() 
-    const button = page.locator(scrapeStrat.buttonSel);
-    let isNotLastPage = buttonExists && (await button.map(scrapeStrat.buttonEval).wait());
-
-    let pagenum = 1
-    while (isNotLastPage && pagenum < 3) {
-
-      //const href = await page.evaluate(sel => document.querySelector(sel).getAttribute('href'), scrapeStrat.buttonSel);
-      //console.log(href)
-
-      const [response] = await Promise.all([
-        page.waitForNavigation({ waitUntil: 'load' }),
-        page.evaluate(sel => {
-          document.querySelector(sel).click()
-        }, scrapeStrat.buttonSel)
-      ]);
-
-      const posts = await scrapeStrat.scrapePosts(page, co)
-      posts.forEach(p => {
-        p.dateFirstScraped = now
-      })
-      arr.push(...posts)
-      
-      buttonExists = await page.$(scrapeStrat.buttonSel)
-      //buttonExists && await buttonExists.scrollIntoView()
-      isNotLastPage = buttonExists && (await button.map(scrapeStrat.buttonEval).wait());
-      ++pagenum
-    } 
+    try {
+      const results = await executeScrape(page, co, url, scrapeStrat)
+      arr.push(...results)
+    } catch (err) {
+      console.log(co, 'skipped due to error')
+      errors.push({co, errObj: err})
+    }
   }
 
   const ny_arr = arr.filter(post => post.locs.includes('New York'))
-  ny_arr.sort((a, b) => a.co.localeCompare(b.co) || b.id.localeCompare(a.id))
+  ny_arr.sort(
+    (a, b) => a.co.localeCompare(b.co) || b.id.localeCompare(a.id)
+  )
 
   const companyJobs = new Map()
   for (const job of ny_arr) {
@@ -184,10 +155,15 @@ async function run() {
     + '-------------\n'
   currlog += `Added ${added.length} new jobs\n`
   currlog += added.map(j => `${j.co}, ${j.id}, ${j.name}, ${j.locs}`).join('\n')
+  if (errors.length) {
+    currlog += '\n'
+    currlog += `Errors: ${errors.length} errors\n`
+    currlog += errors.map(
+      err => `${err.co} \n\t ${err.errObj.name} - ${err.errObj.message} \n\t ${err.errObj.stack}`
+    ).join('\n')
+  }  
+
   currlog += '\n\n'
-  //currlog += `Delisted ${delisted.length} jobs\n` 
-  //currlog += delisted.map(j => `${j.co}, ${j.id}, ${j.name}, ${j.locs}`).join('\n')
-  //currlog += '\n\n'
   currlog += log
 
   try {
@@ -215,11 +191,6 @@ async function run() {
       discordMsg += added.slice(0, 15).map(j => `● ${j.co} | ${j.name} (${j.id}) \n\`     \`${j.locs}`).join('\n')
       discordJS.sendMessage('Here are the jobs that were added', 'Co. | Role (Id) [showing only 15 results]', discordMsg)
     }
-    //if (delisted.length) {
-    //  let discordMsg = 'Delisted:\n'
-    //  discordMsg += delisted.slice(0, 15).map(j => `● ${j.co} | ${j.name} (${j.id}) \n\`     \`${j.locs}`).join('\n')
-    //  discordJS.sendMessage('Here are the jobs that were delisted', 'Co. | Role (Id) [showing only 15 results]', discordMsg)
-    //}
   } catch (err) {
     console.log('error! sending discord message')
     console.log(err)
@@ -231,6 +202,48 @@ async function run() {
   }
 
   browser.close();
+}
+
+async function executeScrape(page, co, url, scrapeStrat) {
+  const results = []
+  await page.goto(url, { waitUntil: 'load' });
+
+  const now = (new Date()).toLocaleString("en-US", { timeZone: "America/New_York" })
+
+  scrapeStrat.runOnce && await scrapeStrat.runOnce(page) 
+
+  const posts = await scrapeStrat.scrapePosts(page, co)
+  posts.forEach(p => {
+    p.dateFirstScraped = now
+  })
+  results.push(...posts)
+
+  let buttonExists = await page.$(scrapeStrat.buttonSel)
+  //buttonExists && await buttonExists.scrollIntoView() 
+  const button = page.locator(scrapeStrat.buttonSel);
+  let isNotLastPage = buttonExists && (await button.map(scrapeStrat.buttonEval).wait());
+
+  let pagenum = 1
+  while (isNotLastPage && pagenum < 3) {
+    const [response] = await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }),
+      page.evaluate(sel => {
+        document.querySelector(sel).click()
+      }, scrapeStrat.buttonSel)
+    ]);
+
+    const posts = await scrapeStrat.scrapePosts(page, co)
+    posts.forEach(p => {
+      p.dateFirstScraped = now
+    })
+    results.push(...posts)
+    
+    buttonExists = await page.$(scrapeStrat.buttonSel)
+    //buttonExists && await buttonExists.scrollIntoView()
+    isNotLastPage = buttonExists && (await button.map(scrapeStrat.buttonEval).wait());
+    ++pagenum
+  } 
+  return results
 }
 
 const SCRAPE_TARGETS =  
@@ -279,6 +292,31 @@ const SCRAPE_TARGETS =
       "AirBnb",
       "https://careers.airbnb.com/positions/?_departments=engineering&_offices=united-states",
       airbnbStrat
+    ],
+    [ 
+      "Ramp",
+      "https://jobs.ashbyhq.com/ramp?departmentId=e9877d64-61b1-4b37-8518-65af0431cd09",
+      ashStrat 
+    ],
+    [ 
+      "OpenAI",
+      "https://jobs.ashbyhq.com/openai?locationId=07ed9191-5bc6-421b-9883-f1ac2e276ad7",
+      ashStrat 
+    ],
+    [ 
+      "Oso",
+      "https://jobs.ashbyhq.com/openai?locationId=07ed9191-5bc6-421b-9883-f1ac2e276ad7",
+      ashStrat 
+    ],
+    [ 
+      "Rockstar",
+      "https://job-boards.greenhouse.io/rockstargames?offices%5B%5D=4003596003&departments%5B%5D=4006322003",
+      greenhouseStrat
+    ],
+    [ 
+      "Mastercard",
+      "https://careers.mastercard.com/us/en/search-results",
+      mastercardStrat
     ],
   ];
 
