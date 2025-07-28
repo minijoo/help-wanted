@@ -305,7 +305,7 @@ const SCRAPE_TARGETS =
     ],
     [ 
       "Oso",
-      "https://jobs.ashbyhq.com/openai?locationId=07ed9191-5bc6-421b-9883-f1ac2e276ad7",
+      "https://jobs.ashbyhq.com/Oso?departmentId=8278fb2d-8fa2-4698-831a-b0b2320e9486",
       ashStrat 
     ],
     [ 
