@@ -9,14 +9,15 @@ const pinterestStrat = require('./strats/pinterest-strat.js')
 const adobeStrat = require('./strats/adobe-strat.js')
 const airbnbStrat = require('./strats/airbnb-strat.js')
 const ashStrat = require('./strats/ash-strat.js')
+const leverStrat= require('./strats/lever-strat.js')
 const mastercardStrat = require('./strats/mastercard-strat.js')
 
 async function run() {
   const _pageurls = [
     [ 
-      "Mastercard",
-      "https://careers.mastercard.com/us/en/search-results",
-      mastercardStrat
+      "Matchgroup",
+      "https://jobs.lever.co/matchgroup/?location=New%20York%2C%20New%20York",
+      leverStrat
     ],
   ]
 
@@ -47,7 +48,7 @@ async function run() {
     }
   }
 
-  const ny_arr = arr.filter(post => post.locs.includes('New York'))
+  const ny_arr = arr.filter(post => post.locs.toLowerCase().includes('new york'))
   ny_arr.sort(
     (a, b) => a.co.localeCompare(b.co) || b.id.localeCompare(a.id)
   )
@@ -317,6 +318,16 @@ const SCRAPE_TARGETS =
       "Mastercard",
       "https://careers.mastercard.com/us/en/search-results",
       mastercardStrat
+    ],
+    [ 
+      "Matchgroup",
+      "https://jobs.lever.co/matchgroup/?location=New%20York%2C%20New%20York",
+      leverStrat
+    ],
+    [ 
+      "Plaid",
+      "https://jobs.lever.co/plaid/?location=New%20York&department=Engineering&team=Engineering",
+      leverStrat
     ],
   ];
 
