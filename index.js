@@ -15,9 +15,9 @@ const mastercardStrat = require('./strats/mastercard-strat.js')
 async function run() {
   const _pageurls = [
     [ 
-      "Matchgroup",
-      "https://jobs.lever.co/matchgroup/?location=New%20York%2C%20New%20York",
-      leverStrat
+      "Numeric",
+      "https://jobs.ashbyhq.com/numeric?departmentId=4307cdaa-dd4a-4dc2-905b-f3612fbb35bc",
+      ashStrat 
     ],
   ]
 
@@ -328,6 +328,16 @@ const SCRAPE_TARGETS =
       "Plaid",
       "https://jobs.lever.co/plaid/?location=New%20York&department=Engineering&team=Engineering",
       leverStrat
+    ],
+    [ 
+      "Maven",
+      "https://job-boards.greenhouse.io/mavenclinic?gh_src=e11878472us",
+      greenhouseStrat
+    ],
+    [ 
+      "Numeric",
+      "https://jobs.ashbyhq.com/numeric?departmentId=4307cdaa-dd4a-4dc2-905b-f3612fbb35bc",
+      ashStrat 
     ],
   ];
 
