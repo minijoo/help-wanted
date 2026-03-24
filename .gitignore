@@ -4,5 +4,7 @@
 /logs
 /screenshots
 *.swp
-
+temp
+.env
+data/*
 

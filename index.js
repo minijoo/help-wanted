@@ -1,27 +1,38 @@
 const puppeteer = require('puppeteer');
 const fs = require('node:fs')
+const { argv } = require('node:process');
 const discordJS = require('./discord.js')
-const greenhouseStrat = require('./strats/greenhouse-strat.js')
-const workdayStrat = require('./strats/workday-strat.js')
-const disneyStrat = require('./strats/disney-strat.js')
-const salesforceStrat = require('./strats/salesforce-strat.js')
-const pinterestStrat = require('./strats/pinterest-strat.js')
-const adobeStrat = require('./strats/adobe-strat.js')
-const airbnbStrat = require('./strats/airbnb-strat.js')
-const ashStrat = require('./strats/ash-strat.js')
-const leverStrat= require('./strats/lever-strat.js')
-const mastercardStrat = require('./strats/mastercard-strat.js')
+const SCRAPE_TARGETS = require('./targets.js');
 
-async function run() {
-  const _pageurls = [
-    [ 
-      "Numeric",
-      "https://jobs.ashbyhq.com/numeric?departmentId=4307cdaa-dd4a-4dc2-905b-f3612fbb35bc",
-      ashStrat 
-    ],
-  ]
+const MYPATH = process.env.HOME + '/workspace/scraper';
 
-  const pageurls = SCRAPE_TARGETS 
+function toLine({id, name, locs, postedOn, dateFirstScraped}, delim) {
+  const includesNY = locs.includes('New York');
+  return [id, name, includesNY, postedOn, dateFirstScraped].join(delim);
+}
+
+function insertCompanyFile(company, entries) {
+  const FN = `${MYPATH}/data/${company.toLowerCase()}-data`;
+  entries.sort();
+  fs.writeFileSync(FN, entries.join('\n'))
+  return
+
+  //try {
+  //  const ex = fs.readFileSync(FN, 'utf8');
+  //  const ex_arr = ex.split('\n');
+  //  ex_arr.push(...entries);
+  //  ex_arr.sort();
+  //  fs.writeFileSync(FN, ex_arr.join('\n'))
+  //  return
+  //} catch (err) {
+  //  console.error(err);
+  //  console.log('smth wrong w/ file or doesn`t exist; creating new');
+  //}
+}
+
+async function run(companies) {
+  const companySet = new Set(companies);
+  const pageurls = SCRAPE_TARGETS.filter(([name]) => companySet.has(name))
 
   const browser = await puppeteer.launch({
     //headless: false,
@@ -41,8 +52,22 @@ async function run() {
   for (const [co, url, scrapeStrat] of pageurls) {
     try {
       const results = await executeScrape(page, co, url, scrapeStrat)
-      arr.push(...results)
+      arr.push(...results) //deprecate
+      const header = `${co} Results`;
+      const entries = results.map(jobJson => toLine(jobJson, '\t'));
+      console.log(`${header}; found ${entries.length} jobs`);
+      insertCompanyFile(co, entries);
+
+  //{
+  //  "co": "Adobe",
+  //  "id": "R157567",
+  //  "name": "Software Development Engineer",
+  //  "locs": "New York",
+  //  "postedOn": "07/17/2025",
+  //  "dateFirstScraped": "7/17/2025, 9:34:36 PM"
+  //},
     } catch (err) {
+      console.error(err);
       console.log(co, 'skipped due to error')
       errors.push({co, errObj: err})
     }
@@ -63,7 +88,7 @@ async function run() {
 
   let log
   try {
-    log = fs.readFileSync('./logs/log.txt')
+    log = fs.readFileSync(`${MYPATH}/logs/log.txt`)
   } catch (err) {
     console.error('no log found. terminating')
     browser.close()
@@ -72,10 +97,10 @@ async function run() {
 
   let contents = ''
   try {
-    contents = fs.readFileSync('./files/all.json') 
+    contents = fs.readFileSync(`${MYPATH}/files/all.json`) 
   } catch (err) {
     console.log('writing new all.json file')
-    fs.writeFileSync('./files/all.json', JSON.stringify(ny_arr, null, 2))
+    fs.writeFileSync(`${MYPATH}/files/all.json`, JSON.stringify(ny_arr, null, 2))
     console.log('no existing array. exiting early')
     browser.close()
     return
@@ -171,14 +196,14 @@ async function run() {
     //const toWrite = last_arr.filter(j => !cos.includes(j.co))
     //toWrite.push(...ny_arr)
     //toWrite.sort((a, b) => a.co.localeCompare(b.co) || b.id.localeCompare(a.id))
-    fs.writeFileSync('./files/all.json', JSON.stringify(merged, null, 2))
+    fs.writeFileSync(`${MYPATH}/files/all.json`, JSON.stringify(merged, null, 2))
     console.log('all.json updated')
   } catch (err) {
     console.log('error! writing to all.json. losing data from this scrape. exiting.')
   }
 
   try {
-    fs.writeFileSync('./logs/log.txt', currlog)
+    fs.writeFileSync(`${MYPATH}/logs/log.txt`, currlog)
     console.log('log updated')
   } catch (err) {
     console.log('error! writing to logs.txt. printing log instead')
@@ -186,7 +211,7 @@ async function run() {
   }
 
   try {
-    discordJS.sendMessage(`Job completed: Added ${added.length}`)
+    discordJS.sendMessage(`Job completed: Added ${added.length} (from mac)`)
     if (added.length) {
       let discordMsg = 'Added:\n'
       discordMsg += added.slice(0, 15).map(j => `● ${j.co} | ${j.name} (${j.id}) \n\`     \`${j.locs}`).join('\n')
@@ -247,98 +272,6 @@ async function executeScrape(page, co, url, scrapeStrat) {
   return results
 }
 
-const SCRAPE_TARGETS =  
-  [
-    [
-      "Adobe", 
-      "https://careers.adobe.com/us/en/c/engineering-and-product-jobs?s=1",
-      adobeStrat 
-    ],
-    [
-      "Snap", 
-      "https://wd1.myworkdaysite.com/en-US/recruiting/snapchat/snap/jobs?jobFamily=8d73f0a7971d102b9d459841e16ae3a5&locations=256f279d5e741082c567c24fca236272&locations=efe1a865073101b9db6c8da7020a6037",
-      workdayStrat
-    ],
-    [
-      "Disney",
-      "https://www.disneycareers.com/en/search-jobs/software%20engineer/New%20York,%20NY/391/1/4/6252001-5128638-5128581/40x7128/-74x006/100/2",
-      disneyStrat
-    ],
-    [
-      "Rakuten",
-      "https://rakuten.wd1.myworkdayjobs.com/RakutenRewards?jobFamily=c37e417fc77e01c2614f27b127003100&locations=35e06daa025301eab0ce91150202f3d8",
-       workdayStrat
-    ],
-    [
-      "Clear", 
-      "https://job-boards.greenhouse.io/clear?departments%5B%5D=42447",
-      greenhouseStrat 
-    ],
-    [
-      "Twitch", 
-      "https://job-boards.greenhouse.io/twitch?departments%5B%5D=4036629002",
-      greenhouseStrat 
-    ], 
-    [
-      "DoorDash", 
-      "https://job-boards.greenhouse.io/doordashusa?departments%5B%5D=2438",
-      greenhouseStrat
-    ],
-    [
-      "StubHub", 
-      "https://job-boards.eu.greenhouse.io/stubhubinc?departments%5B%5D=4034328101&offices%5B%5D=4016791101",
-      greenhouseStrat
-    ],
-    [ 
-      "AirBnb",
-      "https://careers.airbnb.com/positions/?_departments=engineering&_offices=united-states",
-      airbnbStrat
-    ],
-    [ 
-      "Ramp",
-      "https://jobs.ashbyhq.com/ramp?departmentId=e9877d64-61b1-4b37-8518-65af0431cd09",
-      ashStrat 
-    ],
-    [ 
-      "OpenAI",
-      "https://jobs.ashbyhq.com/openai?locationId=07ed9191-5bc6-421b-9883-f1ac2e276ad7",
-      ashStrat 
-    ],
-    [ 
-      "Oso",
-      "https://jobs.ashbyhq.com/Oso?departmentId=8278fb2d-8fa2-4698-831a-b0b2320e9486",
-      ashStrat 
-    ],
-    [ 
-      "Rockstar",
-      "https://job-boards.greenhouse.io/rockstargames?offices%5B%5D=4003596003&departments%5B%5D=4006322003",
-      greenhouseStrat
-    ],
-    [ 
-      "Mastercard",
-      "https://careers.mastercard.com/us/en/search-results",
-      mastercardStrat
-    ],
-    [ 
-      "Matchgroup",
-      "https://jobs.lever.co/matchgroup/?location=New%20York%2C%20New%20York",
-      leverStrat
-    ],
-    [ 
-      "Plaid",
-      "https://jobs.lever.co/plaid/?location=New%20York&department=Engineering&team=Engineering",
-      leverStrat
-    ],
-    [ 
-      "Maven",
-      "https://job-boards.greenhouse.io/mavenclinic?gh_src=e11878472us",
-      greenhouseStrat
-    ],
-    [ 
-      "Numeric",
-      "https://jobs.ashbyhq.com/numeric?departmentId=4307cdaa-dd4a-4dc2-905b-f3612fbb35bc",
-      ashStrat 
-    ],
-  ];
+const args = argv.filter((_, i) => i > 0)
 
-run();
+run(args);

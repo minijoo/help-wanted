@@ -1,0 +1,38 @@
+#!/bin/bash
+
+DIR=`dirname $0`/..
+MYPATH=$DIR
+
+if [ $# -lt 1 ]
+then
+  echo "$0 error: you must supply an argument"
+  exit 1
+fi
+
+for NAME in $@
+do
+  PRE=`echo $NAME | tr 'A-Z' 'a-z'`
+  CURRFILE="$MYPATH/data/${PRE}-data"
+  ALLFILE="$MYPATH/data/${PRE}-data-all"
+  while true; do
+    [ ! -f $CURRFILE ] && break
+
+    read -p "Process ${CURRFILE} and ${ALLFILE} in place? " yn
+
+    case $yn in
+      [yY] ) echo ok, proceeding
+        cat $CURRFILE >> ${ALLFILE}
+        sort ${ALLFILE} | awk '!a[$1]++' > ${ALLFILE}_tmp
+        mv ${ALLFILE}_tmp ${ALLFILE}
+        break
+        ;;
+      [nN] ) echo skipping...
+        break
+        ;;
+      * ) echo invalid response
+    esac
+
+  done
+done
+
+exit 0

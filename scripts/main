@@ -1,0 +1,60 @@
+#!/bin/bash
+
+DIR=`dirname $0`/..
+MYPATH=$DIR
+
+if [ $# -lt 1 ]
+then
+  echo "$0 error: must supply argument"
+  exit 1
+fi
+
+$NODEPATH/node $MYPATH/index.js $@
+
+declare -a prefixes 
+BODY=''
+for NAME in $@
+do
+  PRE=`echo $NAME | tr 'A-Z' 'a-z'`
+  RESULTS=`$MYPATH/scripts/listnew "$MYPATH/data/${PRE}-data" "$MYPATH/data/${PRE}-data-all"`
+  if [ -n "$RESULTS" ]
+  then
+    echo $PRE delta results: `echo "$RESULTS" | wc -l`
+    FMT_RESULTS=$(
+      echo "$RESULTS" | \
+      while read LINE
+      do
+        A=`echo "$LINE" | cut -f1`
+        B=`echo "$LINE" | cut -f2`
+        C=`echo "$LINE" | cut -f3`
+        echo $A \(ny: $C\)
+        paste <(echo "") <(echo "$B" | fold -sw 40) | expand -t3
+      done
+    )
+
+    BODY+="$NAME";
+    BODY+='\n'
+    BODY+="$FMT_RESULTS";
+    BODY+='\n\n'
+
+    prefixes+=($PRE)
+  fi
+done
+
+# email results
+SUBJECT=`date '+Scrape Results (%D %k:%M)'`
+if [ -n "$BODY" ] 
+then
+  # printf interprets '\n' as actual newline. The command substitution is wrapped in double-quotes again to keep the 
+  # result in one string
+  $MYPATH/scripts/mailgunsend jk jookang22@gmail.com "$SUBJECT" "`printf "%b" "$BODY"`"
+
+  # merges data files into their respective "all" files
+  $MYPATH/scripts/dedupe ${prefixes[@]}
+else
+  $MYPATH/scripts/mailgunsend jk jookang22@gmail.com "$SUBJECT" "No updates"
+
+fi
+
+exit 0
+  

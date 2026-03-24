@@ -1,0 +1,23 @@
+#!/bin/bash
+
+DIR=`dirname $0`/..
+. $DIR/.env
+
+if [ -z "$MAILGUN_APIKEY" ] || [ -z "$MAILGUN_BASEURL" ] || [ -z "$MAILGUN_DOMAIN" ]
+then
+  echo "$0 error: MAILGUN_APIKEY, MAILGUN_BASEURL or MAILGUN_DOMAIN is empty"
+  exit 1
+fi
+
+if [ $# -lt 2 ] 
+then
+  echo "$0 error: recipient name and email are required arguments"
+  exit 1
+fi
+
+curl -s --user "api:$MAILGUN_APIKEY" \
+	${MAILGUN_BASEURL}/v3/$MAILGUN_DOMAIN/messages \
+	-F from="Scraper Bot <postmaster@$MAILGUN_DOMAIN>" \
+	-F to="$1 <$2>" \
+	-F subject="$3" \
+	-F text="$4"

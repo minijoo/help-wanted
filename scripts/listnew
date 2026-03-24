@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# find entries in $1 that are not in $2
+
+if [ $# -lt 2 ]
+then
+  echo "$0 error: you must supply two argument"
+  exit 1
+fi
+
+if [ ! -f $1 ] # additive file is empty
+then
+  exit 0
+fi
+
+if [ ! -f $2 ] # base file is empty
+then
+  cat $1
+  exit 0
+fi
+
+# Dedupe first file
+THIS_DIR=`dirname $1`
+awk '!a[$1]++' $1 > $THIS_DIR/tmp && mv $THIS_DIR/tmp $1
+
+comm -23 <(cut -f1 $1) <(cut -f1 $2) | \
+  while read A
+    do
+      awk \$1==\"$A\" $1
+    done
