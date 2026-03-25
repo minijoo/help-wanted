@@ -4,7 +4,7 @@ const { argv } = require('node:process');
 const discordJS = require('./discord.js')
 const SCRAPE_TARGETS = require('./targets.js');
 
-const MYPATH = process.env.HOME + '/workspace/scraper';
+const MYPATH = __dirname;
 
 function toLine({id, name, locs, postedOn, dateFirstScraped}, delim) {
   const includesNY = locs.includes('New York');
