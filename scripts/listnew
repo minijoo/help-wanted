@@ -20,8 +20,8 @@ then
 fi
 
 # Dedupe first file
-TEMP=`awk '!a[$1]++ {printf "%s\\\\n",$0}' $1 | sed 's/\t/\\\\t/g'`
-echo -ne $TEMP > $1
+TEMP=`awk '!a[$1]++' $1`
+echo "$TEMP" > $1
 
 comm -23 <(cut -f1 $1) <(cut -f1 $2) | \
   while read A

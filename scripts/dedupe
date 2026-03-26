@@ -41,8 +41,8 @@ do
     done
   else
     cat $CURRFILE >> ${ALLFILE}
-    TEMP=`sort ${ALLFILE} | awk '!a[$1]++ {printf "%s\\\\n",$0}' | sed 's/\t/\\\\t/g'`
-    echo -ne $TEMP > $ALLFILE
+    TEMP=`sort $ALLFILE | awk '!a[$1]++'`
+    echo "$TEMP" > $ALLFILE
   fi
 done
 
