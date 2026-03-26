@@ -3,36 +3,47 @@
 DIR=`dirname $0`/..
 MYPATH=$DIR
 
-if [ $# -lt 1 ]
+ASK=0
+if [ $# -gt 0 ] && [ $1 = '-c' ] 
 then
-  echo "$0 error: you must supply an argument"
-  exit 1
+  ASK=1
 fi
 
 for NAME in $@
 do
+  if [ $NAME = '-c' ]
+  then
+    continue
+  fi
   PRE=`echo $NAME | tr 'A-Z' 'a-z'`
   CURRFILE="$MYPATH/data/${PRE}-data"
   ALLFILE="$MYPATH/data/${PRE}-data-all"
-  while true; do
-    [ ! -f $CURRFILE ] && break
+  if [ $ASK -gt 0 ]
+  then
+    while true; do
+      [ ! -f $CURRFILE ] && break
 
-    read -p "Process ${CURRFILE} and ${ALLFILE} in place? " yn
+      read -p "Process ${CURRFILE} and ${ALLFILE} in place? " yn
 
-    case $yn in
-      [yY] ) echo ok, proceeding
-        cat $CURRFILE >> ${ALLFILE}
-        TEMP=`sort ${ALLFILE} | awk '!a[$1]++ {printf "%s\\\\n",$0}' | sed 's/\t/\\\\t/g'`
-        echo -ne $TEMP > $ALLFILE
-        break
-        ;;
-      [nN] ) echo skipping...
-        break
-        ;;
-      * ) echo invalid response
-    esac
+      case $yn in
+        [yY] ) echo ok, proceeding
+          cat $CURRFILE >> ${ALLFILE}
+          TEMP=`sort ${ALLFILE} | awk '!a[$1]++ {printf "%s\\\\n",$0}' | sed 's/\t/\\\\t/g'`
+          echo -ne $TEMP > $ALLFILE
+          break
+          ;;
+        [nN] ) echo skipping...
+          break
+          ;;
+        * ) echo invalid response
+      esac
 
-  done
+    done
+  else
+    cat $CURRFILE >> ${ALLFILE}
+    TEMP=`sort ${ALLFILE} | awk '!a[$1]++ {printf "%s\\\\n",$0}' | sed 's/\t/\\\\t/g'`
+    echo -ne $TEMP > $ALLFILE
+  fi
 done
 
 exit 0

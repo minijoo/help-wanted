@@ -15,12 +15,22 @@ then
   exit 1
 fi
 
+ASK=0
+if [ $1 = '-c' ] 
+then
+  ASK=1
+fi
+
 $NODEPATH/node $MYPATH/index.js $@
 
 declare -a prefixes 
 BODY=''
 for NAME in $@
 do
+  if [ $NAME = '-c' ]
+  then
+    continue
+  fi
   PRE=`echo $NAME | tr 'A-Z' 'a-z'`
   RESULTS=`$MYPATH/scripts/listnew "$MYPATH/data/${PRE}-data" "$MYPATH/data/${PRE}-data-all"`
   if [ -n "$RESULTS" ]
@@ -44,10 +54,20 @@ do
     BODY+='\n\n'
 
     prefixes+=($PRE)
+  else 
+    echo $PRE delta results: 0
   fi
 done
 
-# email results
+# merges data files into their respective "all" files
+if [ $ASK -gt 0 ]
+then
+  $MYPATH/scripts/dedupe -c ${prefixes[@]}
+else
+  $MYPATH/scripts/dedupe ${prefixes[@]}
+fi
+
+# Email results
 SUBJECT=`date '+Scrape Results (%D %k:%M)'`
 if [ -n "$BODY" ] 
 then
@@ -55,8 +75,6 @@ then
   # result in one string
   $MYPATH/scripts/mailgunsend jk jookang22@gmail.com "$SUBJECT" "`printf "%b" "$BODY"`"
 
-  # merges data files into their respective "all" files
-  $MYPATH/scripts/dedupe ${prefixes[@]}
 else
   $MYPATH/scripts/mailgunsend jk jookang22@gmail.com "$SUBJECT" "No updates"
 
