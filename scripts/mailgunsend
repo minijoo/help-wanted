@@ -15,9 +15,11 @@ then
   exit 1
 fi
 
+HOSTNAME_SHORT=`hostname | cut -d'-' -f1`
+
 curl -s --user "api:$MAILGUN_APIKEY" \
 	${MAILGUN_BASEURL}/v3/$MAILGUN_DOMAIN/messages \
-	-F from="Scraper Bot <postmaster@$MAILGUN_DOMAIN>" \
+        -F from="Scraper Bot (${HOSTNAME_SHORT})<postmaster@$MAILGUN_DOMAIN>" \
 	-F to="$1 <$2>" \
 	-F subject="$3" \
 	-F text="$4"
