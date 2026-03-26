@@ -22,8 +22,8 @@ do
     case $yn in
       [yY] ) echo ok, proceeding
         cat $CURRFILE >> ${ALLFILE}
-        sort ${ALLFILE} | awk '!a[$1]++' > ${ALLFILE}_tmp
-        mv ${ALLFILE}_tmp ${ALLFILE}
+        TEMP=`sort ${ALLFILE} | awk '!a[$1]++ {printf "%s\\\\n",$0}' | sed 's/\t/\\\\t/g'`
+        echo -ne $TEMP > $ALLFILE
         break
         ;;
       [nN] ) echo skipping...
