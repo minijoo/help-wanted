@@ -30,14 +30,22 @@ function insertCompanyFile(company, entries) {
   //}
 }
 
-async function run(companies) {
+async function run(arg1, companies) {
+  let slowMo = parseInt(arg1);
+  if (isNaN(slowMo)) 
+    slowMo = 0;
+
   const companySet = new Set(companies);
   const pageurls = SCRAPE_TARGETS.filter(([name]) => companySet.has(name))
 
-  const browser = await puppeteer.launch({
-    //headless: false,
-    //slowMo: 200
-  });
+  const opts = {}
+  
+  if (slowMo > 0) {
+    opts.headless = false;
+    opts.slowMo = slowMo;
+  }
+
+  const browser = await puppeteer.launch(opts);
 
   const page = await browser.newPage();
   await page.setViewport({
@@ -45,7 +53,7 @@ async function run(companies) {
     height: 768,
   });
 
-  //page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+  // page.on('console', msg => console.log('PAGE LOG:', msg.text()));
 
   const arr = []
   const errors = []
@@ -272,6 +280,11 @@ async function executeScrape(page, co, url, scrapeStrat) {
   return results
 }
 
-const args = argv.filter((_, i) => i > 0)
+if (argv.length < 4) {
+  console.error("At least two arguments required");
+  return;
+}
 
-run(args);
+const args = argv.filter((_, i) => i > 1)
+
+run(argv[2], args);

@@ -21,7 +21,7 @@ then
   ASK=1
 fi
 
-$NODEPATH/node $MYPATH/index.js $@
+$NODEPATH/node $MYPATH/index.js 0 $@
 
 declare -a prefixes 
 BODY=''
